@@ -33,17 +33,14 @@ function App() {
     setShowForm(true);
   };
 
-  const handleSubmit = async (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">, shouldClose: boolean) => {
+  const handleSubmit = async (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">) => {
     if (editKey) {
       await updateKey(editKey.id, data);
     } else {
       await addKey(data);
     }
-
-    if (shouldClose) {
-      setShowForm(false);
-      setEditKey(null);
-    }
+    setShowForm(false);
+    setEditKey(null);
   };
 
   const handleCancel = () => {

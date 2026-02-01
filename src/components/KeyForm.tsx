@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import type { ApiKey, KeyType } from "../types";
 
 interface KeyFormProps {
   editKey: ApiKey | null;
   existingKeys: ApiKey[];
-  onSubmit: (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">, shouldClose: boolean) => void;
+  onSubmit: (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">) => void;
   onCancel: () => void;
 }
 
@@ -15,7 +15,6 @@ export function KeyForm({ editKey, existingKeys, onSubmit, onCancel }: KeyFormPr
   const [accessKeyId, setAccessKeyId] = useState("");
   const [accessKeySecret, setAccessKeySecret] = useState("");
   const [note, setNote] = useState("");
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editKey) {
@@ -55,8 +54,6 @@ export function KeyForm({ editKey, existingKeys, onSubmit, onCancel }: KeyFormPr
       return;
     }
 
-    const shouldClose = !!editKey || type !== 'idSecret';
-
     if (type === 'apiKey') {
       if (!key.trim()) return;
       onSubmit({
@@ -64,7 +61,7 @@ export function KeyForm({ editKey, existingKeys, onSubmit, onCancel }: KeyFormPr
         name: name.trim(),
         key: key.trim(),
         note: note.trim()
-      }, shouldClose);
+      });
     } else {
       if (!accessKeyId.trim() || !accessKeySecret.trim()) return;
       onSubmit({
@@ -73,21 +70,7 @@ export function KeyForm({ editKey, existingKeys, onSubmit, onCancel }: KeyFormPr
         accessKeyId: accessKeyId.trim(),
         accessKeySecret: accessKeySecret.trim(),
         note: note.trim()
-      }, shouldClose);
-    }
-
-    if (!shouldClose) {
-      // Clear form for next entry but keep type
-      setName("");
-      setKey("");
-      setAccessKeyId("");
-      setAccessKeySecret("");
-      setNote("");
-
-      // Focus name input for next entry
-      setTimeout(() => {
-        nameInputRef.current?.focus();
-      }, 0);
+      });
     }
   };
 
@@ -153,7 +136,6 @@ export function KeyForm({ editKey, existingKeys, onSubmit, onCancel }: KeyFormPr
               名称 <span className="text-red-400">*</span>
             </label>
             <input
-              ref={nameInputRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
