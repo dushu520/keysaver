@@ -1,4 +1,6 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { save, open } from "@tauri-apps/plugin-dialog";
+import { writeTextFile, readTextFile } from "@tauri-apps/plugin-fs";
 import { Header } from "./components/Header";
 import { KeyList } from "./components/KeyList";
 import { KeyForm } from "./components/KeyForm";
@@ -10,7 +12,6 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [editKey, setEditKey] = useState<ApiKey | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sortedKeys = [...keys].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -49,57 +50,78 @@ function App() {
     setEditKey(null);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
+      const filePath = await save({
+        defaultPath: `keysaver-backup-${new Date().toISOString().split('T')[0]}.json`,
+        filters: [{
+          name: 'JSON File',
+          extensions: ['json']
+        }]
+      });
+
+      if (!filePath) return; // User cancelled
+
       const data: AppData = {
         version: "1.0.0",
         keys: keys
       };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `keysaver-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+
+      await writeTextFile(filePath, JSON.stringify(data, null, 2));
+      alert("导出成功！");
     } catch (err) {
       console.error("Export failed:", err);
-      alert("导出失败，请重试");
-    }
-  };
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!confirm("确定要导入此备份文件吗？这将覆盖当前的所有密钥数据！")) {
-      e.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const content = event.target?.result as string;
-        const data = JSON.parse(content);
-        await importData(data);
-        alert("备份导入成功！");
-      } catch (err) {
-        console.error("Import failed:", err);
-        alert("导入失败：无效的备份文件");
-      } finally {
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
+      // Fallback for browser mode
+      if (typeof window !== 'undefined' && !(window as any).__TAURI_INTERNALS__) {
+        const data: AppData = {
+          version: "1.0.0",
+          keys: keys
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `keysaver-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        alert("导出失败：" + String(err));
       }
-    };
-    reader.readAsText(file);
+    }
+  };
+
+  const handleImport = async () => {
+    try {
+      const filePath = await open({
+        multiple: false,
+        directory: false,
+        filters: [{
+          name: 'JSON File',
+          extensions: ['json']
+        }]
+      });
+
+      if (!filePath) return; // User cancelled
+
+      if (!confirm("确定要导入此备份文件吗？这将覆盖当前的所有密钥数据！")) {
+        return;
+      }
+
+      const content = await readTextFile(filePath as string);
+      const data = JSON.parse(content);
+      await importData(data);
+      alert("备份导入成功！");
+    } catch (err) {
+      console.error("Import failed:", err);
+      // Fallback for browser mode
+      if (typeof window !== 'undefined' && !(window as any).__TAURI_INTERNALS__) {
+        alert("浏览器预览模式请使用文件选择框导入");
+      } else {
+        alert("导入失败：无效的备份文件或权限不足");
+      }
+    }
   };
 
   if (isLoading) {
@@ -122,16 +144,7 @@ function App() {
         keyCount={filteredKeys.length}
         onSearch={setSearchQuery}
         onExport={handleExport}
-        onImport={handleImportClick}
-      />
-
-      {/* Hidden file input for import */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        className="hidden"
-        accept=".json"
+        onImport={handleImport}
       />
 
       <KeyList keys={filteredKeys} onEdit={handleEdit} onDelete={deleteKey} />
