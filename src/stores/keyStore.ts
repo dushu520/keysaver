@@ -11,6 +11,7 @@ interface KeyStore {
   addKey: (keyData: Omit<ApiKey, "id" | "createdAt" | "updatedAt">) => Promise<void>;
   updateKey: (id: string, keyData: Partial<Omit<ApiKey, "id" | "createdAt" | "updatedAt">>) => Promise<void>;
   deleteKey: (id: string) => Promise<void>;
+  importData: (data: AppData) => Promise<void>;
 }
 
 export const useKeyStore = create<KeyStore>((set, get) => ({
@@ -68,5 +69,30 @@ export const useKeyStore = create<KeyStore>((set, get) => ({
 
     const data: AppData = { version: "1.0.0", keys: newKeys };
     await saveKeys(data);
+  },
+
+  importData: async (data: AppData) => {
+    set({ isLoading: true, error: null });
+    try {
+      if (!data || !Array.isArray(data.keys)) {
+        throw new Error("无效的备份文件格式");
+      }
+
+      // Ensure all keys have valid properties
+      const validKeys = data.keys.map(k => ({
+        ...k,
+        type: k.type || 'apiKey',
+        // Ensure required fields exist
+        name: k.name || 'Unnamed',
+        createdAt: k.createdAt || Date.now(),
+        updatedAt: k.updatedAt || Date.now()
+      }));
+
+      set({ keys: validKeys, isLoading: false });
+      await saveKeys({ version: data.version || "1.0.0", keys: validKeys });
+    } catch (err) {
+      set({ error: String(err), isLoading: false });
+      throw err;
+    }
   },
 }));

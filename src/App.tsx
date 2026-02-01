@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Header } from "./components/Header";
 import { KeyList } from "./components/KeyList";
 import { KeyForm } from "./components/KeyForm";
 import { useKeys } from "./hooks/useKeys";
-import type { ApiKey } from "./types";
+import type { ApiKey, AppData } from "./types";
 
 function App() {
-  const { keys, isLoading, addKey, updateKey, deleteKey } = useKeys();
+  const { keys, isLoading, addKey, updateKey, deleteKey, importData } = useKeys();
   const [showForm, setShowForm] = useState(false);
   const [editKey, setEditKey] = useState<ApiKey | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sortedKeys = [...keys].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -48,6 +49,59 @@ function App() {
     setEditKey(null);
   };
 
+  const handleExport = () => {
+    try {
+      const data: AppData = {
+        version: "1.0.0",
+        keys: keys
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `keysaver-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("导出失败，请重试");
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm("确定要导入此备份文件吗？这将覆盖当前的所有密钥数据！")) {
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const data = JSON.parse(content);
+        await importData(data);
+        alert("备份导入成功！");
+      } catch (err) {
+        console.error("Import failed:", err);
+        alert("导入失败：无效的备份文件");
+      } finally {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
   if (isLoading) {
     return (
       <div className="h-screen bg-background flex flex-col items-center justify-center text-muted">
@@ -67,7 +121,19 @@ function App() {
         onAddClick={handleAdd}
         keyCount={filteredKeys.length}
         onSearch={setSearchQuery}
+        onExport={handleExport}
+        onImport={handleImportClick}
       />
+
+      {/* Hidden file input for import */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept=".json"
+      />
+
       <KeyList keys={filteredKeys} onEdit={handleEdit} onDelete={deleteKey} />
       {showForm && (
         <KeyForm
