@@ -72,6 +72,7 @@ export function Header({ onAddClick, keyCount = 0, onSearch, onExport, onImport 
         </svg>
         <span className="hidden sm:inline">添加密钥</span>
       </button>
+      </div>
     </header>
   );
 }
