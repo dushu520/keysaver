@@ -1,0 +1,84 @@
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
+use uuid::Uuid;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ApiKey {
+    pub id: String,
+    pub name: String,
+    pub key: String,
+    pub note: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: u64,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AppData {
+    pub version: String,
+    pub keys: Vec<ApiKey>,
+}
+
+impl Default for AppData {
+    fn default() -> Self {
+        AppData {
+            version: "1.0.0".to_string(),
+            keys: Vec::new(),
+        }
+    }
+}
+
+fn get_data_path() -> PathBuf {
+    let app_dir = dirs::data_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("keysaver");
+
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir).ok();
+    }
+
+    app_dir.join("keys.json")
+}
+
+#[tauri::command]
+fn load_keys() -> Result<AppData, String> {
+    let path = get_data_path();
+
+    if !path.exists() {
+        return Ok(AppData::default());
+    }
+
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))
+}
+
+#[tauri::command]
+fn save_keys(data: AppData) -> Result<(), String> {
+    let path = get_data_path();
+
+    let content = serde_json::to_string_pretty(&data)
+        .map_err(|e| format!("Failed to serialize: {}", e))?;
+
+    fs::write(&path, content)
+        .map_err(|e| format!("Failed to write file: {}", e))
+}
+
+#[tauri::command]
+fn generate_uuid() -> String {
+    Uuid::new_v4().to_string()
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .invoke_handler(tauri::generate_handler![load_keys, save_keys, generate_uuid])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}

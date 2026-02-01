@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0a0a0b;
+  --color-card: #141417;
+  --color-card-hover: #1a1a1f;
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-border: #27272a;
+  --color-border-light: #3f3f46;
+  --color-muted: #a1a1aa;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* 复制成功提示 */
+@keyframes copySuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.copy-success {
+  animation: copySuccess 0.3s ease-out;
+  color: var(--color-success) !important;
+}
+
+/* 输入框焦点效果 */
+input:focus, textarea:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* 按钮点击效果 */
+button:active {
+  transform: scale(0.98);
+}
+
+/* 卡片悬浮效果 */
+.key-card {
+  transition: all 0.2s ease;
+}
+
+.key-card:hover {
+  background: var(--color-card-hover);
+  border-color: var(--color-border-light);
+}
+
+/* 图标按钮样式 */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 文本按钮样式 */
+.text-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.text-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 主按钮样式 */
+.primary-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+/* 危险按钮 */
+.danger-btn {
+  color: var(--color-danger) !important;
+}
+
+.danger-btn:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* 遮罩层 */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+/* 弹窗卡片 */
+.modal-card {
+  background: linear-gradient(180deg, #1a1a1f 0%, #141417 100%);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Key 显示区域 */
+.key-display {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--color-border);
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* 空状态样式 */
+.empty-state {
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+}
+
+/* 头部阴影 */
+.header-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 统计标签 */
+.stat-badge {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
