@@ -11,7 +11,9 @@ function App() {
   const [editKey, setEditKey] = useState<ApiKey | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredKeys = keys.filter(key => {
+  const sortedKeys = [...keys].sort((a, b) => b.createdAt - a.createdAt);
+
+  const filteredKeys = sortedKeys.filter(key => {
     const query = searchQuery.toLowerCase();
     return (
       key.name.toLowerCase().includes(query) ||
@@ -31,14 +33,17 @@ function App() {
     setShowForm(true);
   };
 
-  const handleSubmit = async (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">) => {
+  const handleSubmit = async (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">, shouldClose: boolean) => {
     if (editKey) {
       await updateKey(editKey.id, data);
     } else {
       await addKey(data);
     }
-    setShowForm(false);
-    setEditKey(null);
+
+    if (shouldClose) {
+      setShowForm(false);
+      setEditKey(null);
+    }
   };
 
   const handleCancel = () => {
@@ -70,6 +75,7 @@ function App() {
       {showForm && (
         <KeyForm
           editKey={editKey}
+          existingKeys={keys}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
         />

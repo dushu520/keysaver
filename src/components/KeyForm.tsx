@@ -1,19 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ApiKey, KeyType } from "../types";
 
 interface KeyFormProps {
   editKey: ApiKey | null;
-  onSubmit: (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">) => void;
+  existingKeys: ApiKey[];
+  onSubmit: (data: Omit<ApiKey, "id" | "createdAt" | "updatedAt">, shouldClose: boolean) => void;
   onCancel: () => void;
 }
 
-export function KeyForm({ editKey, onSubmit, onCancel }: KeyFormProps) {
+export function KeyForm({ editKey, existingKeys, onSubmit, onCancel }: KeyFormProps) {
   const [type, setType] = useState<KeyType>("apiKey");
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
   const [accessKeyId, setAccessKeyId] = useState("");
   const [accessKeySecret, setAccessKeySecret] = useState("");
   const [note, setNote] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editKey) {
@@ -38,6 +40,23 @@ export function KeyForm({ editKey, onSubmit, onCancel }: KeyFormProps) {
 
     if (!name.trim()) return;
 
+    // Check for duplicates
+    const isDuplicate = existingKeys.some(k => {
+      if (editKey && k.id === editKey.id) return false;
+      if (type === 'apiKey') {
+        return k.type === 'apiKey' && k.key === key.trim();
+      } else {
+        return k.type === 'idSecret' && k.accessKeyId === accessKeyId.trim();
+      }
+    });
+
+    if (isDuplicate) {
+      alert("该密钥已存在，请勿重复添加");
+      return;
+    }
+
+    const shouldClose = !!editKey || type !== 'idSecret';
+
     if (type === 'apiKey') {
       if (!key.trim()) return;
       onSubmit({
@@ -45,7 +64,7 @@ export function KeyForm({ editKey, onSubmit, onCancel }: KeyFormProps) {
         name: name.trim(),
         key: key.trim(),
         note: note.trim()
-      });
+      }, shouldClose);
     } else {
       if (!accessKeyId.trim() || !accessKeySecret.trim()) return;
       onSubmit({
@@ -54,7 +73,21 @@ export function KeyForm({ editKey, onSubmit, onCancel }: KeyFormProps) {
         accessKeyId: accessKeyId.trim(),
         accessKeySecret: accessKeySecret.trim(),
         note: note.trim()
-      });
+      }, shouldClose);
+    }
+
+    if (!shouldClose) {
+      // Clear form for next entry but keep type
+      setName("");
+      setKey("");
+      setAccessKeyId("");
+      setAccessKeySecret("");
+      setNote("");
+
+      // Focus name input for next entry
+      setTimeout(() => {
+        nameInputRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -120,6 +153,7 @@ export function KeyForm({ editKey, onSubmit, onCancel }: KeyFormProps) {
               名称 <span className="text-red-400">*</span>
             </label>
             <input
+              ref={nameInputRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
