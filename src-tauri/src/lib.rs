@@ -8,7 +8,12 @@ use uuid::Uuid;
 pub struct ApiKey {
     pub id: String,
     pub name: String,
-    pub key: String,
+    pub r#type: String,
+    pub key: Option<String>,
+    #[serde(rename = "accessKeyId")]
+    pub access_key_id: Option<String>,
+    #[serde(rename = "accessKeySecret")]
+    pub access_key_secret: Option<String>,
     pub note: String,
     #[serde(rename = "createdAt")]
     pub created_at: u64,
