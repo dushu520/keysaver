@@ -12,6 +12,7 @@ export function KeyCard({ apiKey, onEdit, onDelete }: KeyCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [noteExpanded, setNoteExpanded] = useState(false);
 
   const isIdSecret = apiKey.type === 'idSecret';
 
@@ -23,6 +24,8 @@ export function KeyCard({ apiKey, onEdit, onDelete }: KeyCardProps) {
   const maskedValue = displayValue.length > 8
     ? "••••••••••••" + displayValue.slice(-4)
     : "••••••••";
+
+  const noteLines = apiKey.note ? apiKey.note.split('\n') : [];
 
   const handleCopy = async (text: string, id: string) => {
     await copyToClipboard(text);
@@ -121,10 +124,45 @@ export function KeyCard({ apiKey, onEdit, onDelete }: KeyCardProps) {
           </div>
         </div>
 
-        {/* Note */}
+        {/* Note (hover a line to reveal its copy button) */}
         {apiKey.note && (
-          <div className="px-1">
-            <p className="text-muted text-sm leading-relaxed line-clamp-2">{apiKey.note}</p>
+          <div className="px-1 space-y-0.5">
+            {(noteExpanded ? noteLines : noteLines.slice(0, 2)).map((line, i) => (
+              <div key={i} className="group/line flex items-start gap-1 -mx-1 px-1 rounded hover:bg-white/5">
+                <p className="flex-1 text-muted text-sm leading-relaxed whitespace-pre-wrap break-all">
+                  {line || '\u00A0'}
+                </p>
+                {line.trim() !== '' && (
+                  <button
+                    onClick={() => handleCopy(line, `${apiKey.id}-note-${i}`)}
+                    className={`shrink-0 p-1 mt-0.5 rounded text-muted hover:text-white hover:bg-white/10 transition-opacity ${
+                      copiedId === `${apiKey.id}-note-${i}`
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover/line:opacity-100'
+                    }`}
+                    title="复制本行"
+                  >
+                    {copiedId === `${apiKey.id}-note-${i}` ? (
+                      <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
+            ))}
+            {noteLines.length > 2 && (
+              <button
+                onClick={() => setNoteExpanded((v) => !v)}
+                className="mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                {noteExpanded ? '收起' : `展开全部 ${noteLines.length} 行`}
+              </button>
+            )}
           </div>
         )}
 
