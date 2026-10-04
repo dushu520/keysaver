@@ -126,35 +126,14 @@ export function KeyCard({ apiKey, onEdit, onDelete }: KeyCardProps) {
 
         {/* Note (hover a line to reveal its copy button) */}
         {apiKey.note && (
-          <div className="px-1 space-y-0.5">
-            {(noteExpanded ? noteLines : noteLines.slice(0, 2)).map((line, i) => (
-              <div key={i} className="group/line flex items-start gap-1 -mx-1 px-1 rounded hover:bg-white/5">
-                <p className="flex-1 text-muted text-sm leading-relaxed whitespace-pre-wrap break-all">
-                  {line || '\u00A0'}
-                </p>
-                {line.trim() !== '' && (
-                  <button
-                    onClick={() => handleCopy(line, `${apiKey.id}-note-${i}`)}
-                    className={`shrink-0 p-1 mt-0.5 rounded text-muted hover:text-white hover:bg-white/10 transition-opacity ${
-                      copiedId === `${apiKey.id}-note-${i}`
-                        ? 'opacity-100'
-                        : 'opacity-0 group-hover/line:opacity-100'
-                    }`}
-                    title="复制本行"
-                  >
-                    {copiedId === `${apiKey.id}-note-${i}` ? (
-                      <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                  </button>
-                )}
-              </div>
-            ))}
+          <div className="px-1">
+            <NoteLines
+              lines={noteExpanded ? noteLines : noteLines.slice(0, 2)}
+              apiKeyId={apiKey.id}
+              copiedId={copiedId}
+              onCopy={handleCopy}
+              textClass="text-muted"
+            />
             {noteLines.length > 2 && (
               <button
                 onClick={() => setNoteExpanded((v) => !v)}
@@ -278,7 +257,13 @@ export function KeyCard({ apiKey, onEdit, onDelete }: KeyCardProps) {
               {apiKey.note && (
                 <div className="space-y-2 pt-4 border-t border-white/5">
                   <label className="text-sm font-medium text-muted">备注</label>
-                  <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{apiKey.note}</p>
+                  <NoteLines
+                    lines={noteLines}
+                    apiKeyId={apiKey.id}
+                    copiedId={copiedId}
+                    onCopy={handleCopy}
+                    textClass="text-gray-300"
+                  />
                 </div>
               )}
             </div>
@@ -295,5 +280,46 @@ export function KeyCard({ apiKey, onEdit, onDelete }: KeyCardProps) {
         </div>
       )}
     </>
+  );
+}
+
+function NoteLines({ lines, apiKeyId, copiedId, onCopy, textClass }: {
+  lines: string[];
+  apiKeyId: string;
+  copiedId: string | null;
+  onCopy: (text: string, id: string) => void;
+  textClass: string;
+}) {
+  return (
+    <div className="space-y-0.5">
+      {lines.map((line, i) => (
+        <div key={i} className="group/line flex items-start gap-1 -mx-1 px-1 rounded hover:bg-white/5">
+          <p className={`flex-1 text-sm leading-relaxed whitespace-pre-wrap break-all ${textClass}`}>
+            {line || '\u00A0'}
+          </p>
+          {line.trim() !== '' && (
+            <button
+              onClick={() => onCopy(line, `${apiKeyId}-note-${i}`)}
+              className={`shrink-0 p-1 mt-0.5 rounded text-muted hover:text-white hover:bg-white/10 transition-opacity ${
+                copiedId === `${apiKeyId}-note-${i}`
+                  ? 'opacity-100'
+                  : 'opacity-0 group-hover/line:opacity-100'
+              }`}
+              title="复制本行"
+            >
+              {copiedId === `${apiKeyId}-note-${i}` ? (
+                <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              )}
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
